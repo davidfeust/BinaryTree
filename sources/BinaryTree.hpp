@@ -26,7 +26,8 @@ namespace ariel {
             }
         }; // END Node class
 
-        class Iterator {
+        struct Iterator {
+
         private:
             Node *curr;
             uint i;
@@ -46,10 +47,7 @@ namespace ariel {
 
             T *operator->() const { return &(curr->value); }
 
-            Iterator &operator++() {
-                curr = vector[++i];
-                return *this;
-            }
+            Iterator &operator++();
 
             const Iterator &operator++(int);
 
@@ -82,9 +80,31 @@ namespace ariel {
 
         friend std::ostream &operator<<(std::ostream &os, const BinaryTree<T> &tree) {
             os << "BinaryTree:" << std::endl;
-            in_order(os, tree.root);
+//            in_order(os, tree.root);
+            print("", tree.root, false, os);
             return os;
         }
+
+        // Base on: https://stackoverflow.com/questions/36802354/print-binary-tree-in-a-pretty-way-using-c
+        static void print(const std::string &prefix, const Node *node, bool isLeft, std::ostream &os) {
+            if (node != nullptr) {
+                os << prefix;
+
+                os << (!isLeft ? "├──" : "└──");
+
+                // print the value of the node
+                os << node->value ;//<< std::endl;
+                os << std::endl;
+
+                // enter the next tree level - left and right branch
+                print(prefix + (!isLeft ? "│   " : "    "), node->right, false, os);
+                print(prefix + (!isLeft ? "│   " : "    "), node->left, true, os);
+            }
+        }
+
+//        void print() {
+//            print("", root, false);
+//        }
 
         // iterators:
         Iterator begin_preorder() { return Iterator{root, size, -1}; }
@@ -109,7 +129,7 @@ namespace ariel {
     };
 
     /*
-     * Public method in BinaryTree:
+     * BinaryTree:
      */
 
     // TODO: Replace root- only value?
@@ -152,10 +172,6 @@ namespace ariel {
         return *this;
     }
 
-    /*
-     * Private method in BinaryTree:
-     */
-
     /**
      * Search the value in the tree, start from n node.
      * @param n node to start the search on.
@@ -195,6 +211,19 @@ namespace ariel {
      */
 
     template<typename T>
+    BinaryTree<T>::Iterator::Iterator(BinaryTree::Node *n, uint size, int flag) : curr(n), i(0), type(flag) {
+        if (flag == -1) {
+            fill_preorder(&n);
+        } else if (flag == 0) {
+            fill_inorder(&n);
+        } else {
+            fill_postorder(&n);
+        }
+        vector.push_back(nullptr);
+        curr = vector[0];
+    }
+
+    template<typename T>
     bool ariel::BinaryTree<T>::Iterator::operator==(
             const ariel::BinaryTree<T>::Iterator &rhs) const {
         return curr == rhs.curr;
@@ -204,6 +233,19 @@ namespace ariel {
     bool ariel::BinaryTree<T>::Iterator::operator!=(
             const ariel::BinaryTree<T>::Iterator &rhs) const {
         return curr != rhs.curr;
+    }
+
+    template<typename T>
+    const typename BinaryTree<T>::Iterator &BinaryTree<T>::Iterator::operator++(int) {
+        Iterator temp = *this;
+        curr = vector[++i];
+        return temp;
+    }
+
+    template<typename T>
+    typename BinaryTree<T>::Iterator &BinaryTree<T>::Iterator::operator++() {
+        curr = vector[++i];
+        return *this;
     }
 
     template<typename T>
@@ -234,26 +276,6 @@ namespace ariel {
         fill_postorder(&(*n)->left);
         fill_postorder(&(*n)->right);
         vector.push_back(*n);
-    }
-
-    template<typename T>
-    BinaryTree<T>::Iterator::Iterator(BinaryTree::Node *n, uint size, int flag) : curr(n), i(0), type(flag) {
-        if (flag == -1) {
-            fill_preorder(&n);
-        } else if (flag == 0) {
-            fill_inorder(&n);
-        } else {
-            fill_postorder(&n);
-        }
-        vector.push_back(nullptr);
-        curr = vector[0];
-    }
-
-    template<typename T>
-    const typename BinaryTree<T>::Iterator &BinaryTree<T>::Iterator::operator++(int) {
-        Iterator temp = *this;
-        curr = vector[++i];
-        return temp;
     }
 
 }  // namespace ariel

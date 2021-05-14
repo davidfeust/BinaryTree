@@ -31,8 +31,6 @@ int main() {
         4   5
   */
 
-//  tree_of_ints.begin();
-
   for (auto it=tree_of_ints.begin_preorder(); it!=tree_of_ints.end_preorder(); ++it) {
     cout << (*it) << " " ;
   }  // prints: 1 2 4 5 3
@@ -50,7 +48,7 @@ int main() {
         cout << element << " " ;
     }  // prints: 4 2 5 1 3
     cout << " == 4 2 5 1 3" << endl;
-    const auto &iterator = tree_of_ints.cbegin();
+//    const auto &iterator = tree_of_ints.cbegin();
 
   // The same should work with other types, e.g. with strings:
 
