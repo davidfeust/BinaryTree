@@ -81,30 +81,25 @@ namespace ariel {
         friend std::ostream &operator<<(std::ostream &os, const BinaryTree<T> &tree) {
             os << "BinaryTree:" << std::endl;
 //            in_order(os, tree.root);
-            print("", tree.root, false, os);
+            print("", tree.root, true, os);
             return os;
         }
 
         // Base on: https://stackoverflow.com/questions/36802354/print-binary-tree-in-a-pretty-way-using-c
-        static void print(const std::string &prefix, const Node *node, bool isLeft, std::ostream &os) {
-            if (node != nullptr) {
-                os << prefix;
-
-                os << (!isLeft ? "├──" : "└──");
-
-                // print the value of the node
-                os << node->value ;//<< std::endl;
-                os << std::endl;
-
-                // enter the next tree level - left and right branch
-                print(prefix + (!isLeft ? "│   " : "    "), node->right, false, os);
-                print(prefix + (!isLeft ? "│   " : "    "), node->left, true, os);
+        static void print(const std::string &prefix, const Node *node, bool isRight, std::ostream &os) {
+            if (node == nullptr) {
+                return;
             }
-        }
+            os << prefix;
+            os << (isRight ? "└──" : "├──");
 
-//        void print() {
-//            print("", root, false);
-//        }
+            // print the value of the node
+            os << node->value << std::endl;
+
+            // enter the next tree level - left and right branch
+            print(prefix + (isRight ? "    " : "│   "), node->right, false, os);
+            print(prefix + (isRight ? "    " : "│   "), node->left, true, os);
+        }
 
         // iterators:
         Iterator begin_preorder() { return Iterator{root, size, -1}; }

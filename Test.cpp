@@ -14,7 +14,7 @@ TEST_CASE ("0") {
     }
     BinaryTree<int> bt;
     bt.add_root(0);
-    for (int i = 1; i < 10; ++i) {
+    for (int i = 1; i < 500; ++i) {
         int r = rand() % 2;
         int prev = (rand() % i);
         try {
@@ -28,7 +28,6 @@ TEST_CASE ("0") {
         }
     }
     cout << bt << endl;
-
     for (int &i : bt) {
         cout << i << ", ";
     }
