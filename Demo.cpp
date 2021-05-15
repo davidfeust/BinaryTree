@@ -9,9 +9,12 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
+#include <utility>
+
 using namespace std;
 
 #include "BinaryTree.hpp"
+
 using namespace ariel;
 
 int main() {

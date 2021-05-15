@@ -7,6 +7,8 @@
 #include <iostream>
 #include <ostream>
 #include <vector>
+#include <iomanip>
+#include <cstring>
 
 namespace ariel {
 
@@ -63,9 +65,11 @@ namespace ariel {
 
         BinaryTree &operator=(const BinaryTree &other);
 
-        static void in_order(std::ostream &os, Node *n);
-
         Node *search(Node *n, T value);
+
+        static void print(const std::string &prefix, const Node *node, bool isRight, std::ostream &os, int spaces);
+
+        static int biggest_size(const Node *n, int ans);
 
     public:
         BinaryTree() : root(nullptr), size(0) {}
@@ -79,26 +83,12 @@ namespace ariel {
         BinaryTree &add_right(T existing_value, T new_value);
 
         friend std::ostream &operator<<(std::ostream &os, const BinaryTree<T> &tree) {
-            os << "BinaryTree:" << std::endl;
-//            in_order(os, tree.root);
-            print("", tree.root, true, os);
+            os << "BinaryTree: (size = " << tree.size << ")" << std::endl;
+            int spaces = biggest_size(tree.root, 0);
+            std::string spaces_str(spaces - 1, ' ');
+            os <<  spaces_str << "╗" << std::endl;
+            print("", tree.root, true, os, spaces);
             return os;
-        }
-
-        // Base on: https://stackoverflow.com/questions/36802354/print-binary-tree-in-a-pretty-way-using-c
-        static void print(const std::string &prefix, const Node *node, bool isRight, std::ostream &os) {
-            if (node == nullptr) {
-                return;
-            }
-            os << prefix;
-            os << (isRight ? "└──" : "├──");
-
-            // print the value of the node
-            os << node->value << std::endl;
-
-            // enter the next tree level - left and right branch
-            print(prefix + (isRight ? "    " : "│   "), node->right, false, os);
-            print(prefix + (isRight ? "    " : "│   "), node->left, true, os);
         }
 
         // iterators:
@@ -191,14 +181,44 @@ namespace ariel {
         }
     }
 
+    // Base on: https://stackoverflow.com/questions/36802354/print-binary-tree-in-a-pretty-way-using-c
     template<typename T>
-    void BinaryTree<T>::in_order(std::ostream &os, BinaryTree::Node *n) {
-        if (n == nullptr) {
+    void BinaryTree<T>::print(const std::string &prefix, const BinaryTree::Node *node, bool isRight, std::ostream &os,
+                              int spaces) {
+        if (node == nullptr) {
             return;
         }
-        in_order(os, n->left);
-        os << n->value << " ";
-        in_order(os, n->right);
+        std::string spaces_str(spaces - 1, ' ');
+        os << prefix << spaces_str;
+        os << (isRight ? "╙──" : "╠──");
+
+        // print the value of the node
+        os << std::setw(spaces) << node->value;
+        if (node->left || node->right) {
+            os << "╖";
+        }
+        os << std::endl;
+
+        // enter the next tree level - left and right branch
+        print(prefix + spaces_str + (isRight ? "    " : "║   "), node->right, false, os, spaces);
+        print(prefix + spaces_str + (isRight ? "    " : "║   "), node->left, true, os, spaces);
+    }
+
+    template<typename T>
+    int BinaryTree<T>::biggest_size(const BinaryTree::Node *n, int ans) {
+        if (n == nullptr) {
+            return 0;
+        }
+        std::stringstream stream;
+        stream << n->value;
+        ans = (int) stream.str().size();
+        int left_ans = biggest_size(n->left, ans);
+        int right_ans = biggest_size(n->right, ans);
+        if (left_ans > ans)
+            ans = left_ans;
+        if (right_ans > ans)
+            ans = right_ans;
+        return ans;
     }
 
     /*

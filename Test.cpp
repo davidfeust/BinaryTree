@@ -31,4 +31,6 @@ TEST_CASE ("0") {
     for (int &i : bt) {
         cout << i << ", ";
     }
+    cout << endl;
 }
+
