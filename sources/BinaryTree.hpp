@@ -28,35 +28,11 @@ namespace ariel {
             }
         }; // END Node class
 
-        struct Iterator {
+        static void fill_preorder(Node **n, std::vector<Node *> &vector);
 
-        private:
-            Node *curr;
-            uint i;
-            int type;  // -1: pre | 0: in | 1: post
-            std::vector<Node *> vector;
+        static void fill_inorder(Node **n, std::vector<Node *> &vector);
 
-            void fill_inorder(Node **n);
-
-            void fill_preorder(Node **n);
-
-            void fill_postorder(Node **n);
-
-        public:
-            Iterator(Node *n, uint size, int flag);
-
-            T &operator*() const { return curr->value; }
-
-            T *operator->() const { return &(curr->value); }
-
-            Iterator &operator++();
-
-            const Iterator &operator++(int);
-
-            bool operator==(const Iterator &rhs) const;
-
-            bool operator!=(const Iterator &rhs) const;
-        };  // END Iterator class
+        static void fill_postorder(Node **n, std::vector<Node *> &vector);
 
         Node *root;
         uint size;
@@ -67,9 +43,9 @@ namespace ariel {
 
         Node *search(Node *n, T value);
 
-        static void print(const std::string &prefix, const Node *node, bool isRight, std::ostream &os, int spaces);
+        static void print(const std::string &prefix, const Node *node, bool isRight, std::ostream &os, size_t spaces);
 
-        static int biggest_size(const Node *n, int ans);
+        static size_t biggest_size(const Node *n, size_t ans);
 
     public:
         BinaryTree() : root(nullptr), size(0) {}
@@ -84,34 +60,88 @@ namespace ariel {
 
         friend std::ostream &operator<<(std::ostream &os, const BinaryTree<T> &tree) {
             os << "BinaryTree: (size = " << tree.size << ")" << std::endl;
-            int spaces = biggest_size(tree.root, 0);
+            size_t spaces = biggest_size(tree.root, 0);
             std::string spaces_str(spaces - 1, ' ');
-            os <<  spaces_str << "╗" << std::endl;
+            os << spaces_str << "╗" << std::endl;
             print("", tree.root, true, os, spaces);
             return os;
         }
 
         // iterators:
-        Iterator begin_preorder() { return Iterator{root, size, -1}; }
 
-        Iterator end_preorder() { return Iterator{nullptr, size, -1}; }
+        struct Iterator {
 
-        Iterator begin_inorder() { return Iterator{root, size, 0}; }
+        private:
+            Node *curr;
+            uint i;
+            int type;  // -1: pre | 0: in | 1: post
+            std::vector<Node *> vector;
 
-        Iterator end_inorder() { return Iterator{nullptr, size, 0}; }
+        public:
 
-        Iterator begin_postorder() { return Iterator{root, size, 1}; }
+            Iterator(Node *n, int flag);
 
-        Iterator end_postorder() { return Iterator{nullptr, size, 1}; }
+            T &operator*() const { return curr->value; }
+
+            T *operator->() const { return &(curr->value); }
+
+            Iterator &operator++();
+
+            const Iterator &operator++(int);
+
+            bool operator==(const Iterator &rhs) const;
+
+            bool operator!=(const Iterator &rhs) const;
+        };  // END Iterator class
+
+        struct ConstIterator {
+
+        private:
+            Node *curr;
+            uint i;
+            int type;  // -1: pre | 0: in | 1: post
+            std::vector<Node *> vector;
+
+        public:
+            ConstIterator(Node *n, int flag);
+
+            const T &operator*() const { return curr->value; }
+
+            const T *operator->() const { return &(curr->value); }
+
+            ConstIterator &operator++();
+
+            const ConstIterator &operator++(int);
+
+            bool operator==(const ConstIterator &rhs) const;
+
+            bool operator!=(const ConstIterator &rhs) const;
+        };  // END ConstIterator class
+
+        Iterator begin_preorder() { return Iterator{root, -1}; }
+
+        Iterator end_preorder() { return Iterator{nullptr, -1}; }
+
+        Iterator begin_inorder() { return Iterator{root, 0}; }
+
+        Iterator end_inorder() { return Iterator{nullptr, 0}; }
+
+        Iterator begin_postorder() { return Iterator{root, 1}; }
+
+        Iterator end_postorder() { return Iterator{nullptr, 1}; }
 
         Iterator begin() { return begin_inorder(); }
 
         Iterator end() { return end_inorder(); }
 
-        const Iterator cbegin() { return begin_inorder(); }
+        ConstIterator cbegin() const { return ConstIterator{root, 0}; }
 
-        const Iterator cend() { return end_inorder(); }
+        ConstIterator cend() const { return ConstIterator{nullptr, 0}; }
     };
+
+    ////////////////////////////////
+    //////  Implementations:  //////
+    ////////////////////////////////
 
     /*
      * BinaryTree:
@@ -183,8 +213,8 @@ namespace ariel {
 
     // Base on: https://stackoverflow.com/questions/36802354/print-binary-tree-in-a-pretty-way-using-c
     template<typename T>
-    void BinaryTree<T>::print(const std::string &prefix, const BinaryTree::Node *node, bool isRight, std::ostream &os,
-                              int spaces) {
+    void BinaryTree<T>::print(const std::string &prefix, const BinaryTree::Node *node,
+                              bool isRight,std::ostream &os, unsigned long spaces) {
         if (node == nullptr) {
             return;
         }
@@ -193,7 +223,7 @@ namespace ariel {
         os << (isRight ? "╙──" : "╠──");
 
         // print the value of the node
-        os << std::setw(spaces) << node->value;
+        os << std::setw((int) spaces) << node->value;
         if (node->left || node->right) {
             os << "╖";
         }
@@ -205,15 +235,15 @@ namespace ariel {
     }
 
     template<typename T>
-    int BinaryTree<T>::biggest_size(const BinaryTree::Node *n, int ans) {
+    size_t BinaryTree<T>::biggest_size(const BinaryTree::Node *n, size_t ans) {
         if (n == nullptr) {
             return 0;
         }
         std::stringstream stream;
         stream << n->value;
-        ans = (int) stream.str().size();
-        int left_ans = biggest_size(n->left, ans);
-        int right_ans = biggest_size(n->right, ans);
+        ans = stream.str().size();
+        size_t left_ans = biggest_size(n->left, ans);
+        size_t right_ans = biggest_size(n->right, ans);
         if (left_ans > ans)
             ans = left_ans;
         if (right_ans > ans)
@@ -221,18 +251,48 @@ namespace ariel {
         return ans;
     }
 
+    template<typename T>
+    void BinaryTree<T>::fill_inorder(BinaryTree::Node **n, std::vector<Node *> &v) {
+        if (*n == nullptr) {
+            return;
+        }
+        fill_inorder(&(*n)->left, v);
+        v.push_back(*n);
+        fill_inorder(&(*n)->right, v);
+    }
+
+    template<typename T>
+    void BinaryTree<T>::fill_preorder(BinaryTree::Node **n, std::vector<Node *> &v) {
+        if (*n == nullptr) {
+            return;
+        }
+        v.push_back(*n);
+        fill_preorder(&(*n)->left, v);
+        fill_preorder(&(*n)->right, v);
+    }
+
+    template<typename T>
+    void BinaryTree<T>::fill_postorder(BinaryTree::Node **n, std::vector<Node *> &v) {
+        if (*n == nullptr) {
+            return;
+        }
+        fill_postorder(&(*n)->left, v);
+        fill_postorder(&(*n)->right, v);
+        v.push_back(*n);
+    }
+
     /*
      * Iterator:
      */
 
     template<typename T>
-    BinaryTree<T>::Iterator::Iterator(BinaryTree::Node *n, uint size, int flag) : curr(n), i(0), type(flag) {
+    BinaryTree<T>::Iterator::Iterator(BinaryTree::Node *n, int flag) : curr(n), i(0), type(flag) {
         if (flag == -1) {
-            fill_preorder(&n);
+            fill_preorder(&n, vector);
         } else if (flag == 0) {
-            fill_inorder(&n);
+            fill_inorder(&n, vector);
         } else {
-            fill_postorder(&n);
+            fill_postorder(&n, vector);
         }
         vector.push_back(nullptr);
         curr = vector[0];
@@ -263,34 +323,45 @@ namespace ariel {
         return *this;
     }
 
+    /*
+     * ConstIterator:
+     */
+
     template<typename T>
-    void BinaryTree<T>::Iterator::fill_inorder(BinaryTree::Node **n) {
-        if (*n == nullptr) {
-            return;
+    BinaryTree<T>::ConstIterator::ConstIterator(BinaryTree::Node *n, int flag) {
+        std::cout << "@@@@@@@";
+        if (flag == -1) {
+            fill_preorder(&n, vector);
+        } else if (flag == 0) {
+            fill_inorder(&n, vector);
+        } else {
+            fill_postorder(&n, vector);
         }
-        fill_inorder(&(*n)->left);
-        vector.push_back(*n);
-        fill_inorder(&(*n)->right);
+        vector.push_back(nullptr);
+        curr = vector[0];
     }
 
     template<typename T>
-    void BinaryTree<T>::Iterator::fill_preorder(BinaryTree::Node **n) {
-        if (*n == nullptr) {
-            return;
-        }
-        vector.push_back(*n);
-        fill_preorder(&(*n)->left);
-        fill_preorder(&(*n)->right);
+    bool ariel::BinaryTree<T>::ConstIterator::operator==(const ariel::BinaryTree<T>::ConstIterator &rhs) const {
+        return curr == rhs.curr;
     }
 
     template<typename T>
-    void BinaryTree<T>::Iterator::fill_postorder(BinaryTree::Node **n) {
-        if (*n == nullptr) {
-            return;
-        }
-        fill_postorder(&(*n)->left);
-        fill_postorder(&(*n)->right);
-        vector.push_back(*n);
+    bool ariel::BinaryTree<T>::ConstIterator::operator!=(const ariel::BinaryTree<T>::ConstIterator &rhs) const {
+        return curr != rhs.curr;
+    }
+
+    template<typename T>
+    const typename BinaryTree<T>::ConstIterator &BinaryTree<T>::ConstIterator::operator++(int) {
+        Iterator temp = *this;
+        curr = vector[++i];
+        return temp;
+    }
+
+    template<typename T>
+    typename BinaryTree<T>::ConstIterator &BinaryTree<T>::ConstIterator::operator++() {
+        curr = vector[++i];
+        return *this;
     }
 
 }  // namespace ariel
