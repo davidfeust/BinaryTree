@@ -36,6 +36,7 @@ namespace ariel {
 
         Node *root;
         uint size;
+        size_t len;
 
         BinaryTree(const BinaryTree &other);
 
@@ -45,10 +46,10 @@ namespace ariel {
 
         static void print(const std::string &prefix, const Node *node, bool isRight, std::ostream &os, size_t spaces);
 
-        static size_t biggest_size(const Node *n, size_t ans);
+        void calc_len(T val);
 
     public:
-        BinaryTree() : root(nullptr), size(0) {}
+        BinaryTree() : root(nullptr), size(0), len(0) {}
 
         ~BinaryTree() { delete root; }
 
@@ -60,10 +61,9 @@ namespace ariel {
 
         friend std::ostream &operator<<(std::ostream &os, const BinaryTree<T> &tree) {
             os << "BinaryTree: (size = " << tree.size << ")" << std::endl;
-            size_t spaces = biggest_size(tree.root, 0);
-            std::string spaces_str(spaces - 1, ' ');
+            std::string spaces_str(tree.len - 1, ' ');
             os << spaces_str << "╗" << std::endl;
-            print("", tree.root, true, os, spaces);
+            print("", tree.root, true, os, tree.len);
             return os;
         }
 
@@ -152,6 +152,7 @@ namespace ariel {
     BinaryTree<T> &BinaryTree<T>::add_root(T value) {
         root = new Node{value};
         ++size;
+        calc_len(value);
         return *this;
     }
 
@@ -164,9 +165,11 @@ namespace ariel {
         }
         if (n->left == nullptr) {
             n->left = new Node{new_value};
+            calc_len(new_value);
             ++size;
         } else {
             n->left->value = new_value;
+            calc_len(new_value);
         }
         return *this;
     }
@@ -180,9 +183,11 @@ namespace ariel {
         }
         if (n->right == nullptr) {
             n->right = new Node{new_value};
+            calc_len(new_value);
             ++size;
         } else {
             n->right->value = new_value;
+            calc_len(new_value);
         }
         return *this;
     }
@@ -235,23 +240,6 @@ namespace ariel {
     }
 
     template<typename T>
-    size_t BinaryTree<T>::biggest_size(const BinaryTree::Node *n, size_t ans) {
-        if (n == nullptr) {
-            return 0;
-        }
-        std::stringstream stream;
-        stream << n->value;
-        ans = stream.str().size();
-        size_t left_ans = biggest_size(n->left, ans);
-        size_t right_ans = biggest_size(n->right, ans);
-        if (left_ans > ans)
-            ans = left_ans;
-        if (right_ans > ans)
-            ans = right_ans;
-        return ans;
-    }
-
-    template<typename T>
     void BinaryTree<T>::fill_inorder(BinaryTree::Node **n, std::vector<Node *> &v) {
         if (*n == nullptr) {
             return;
@@ -279,6 +267,13 @@ namespace ariel {
         fill_postorder(&(*n)->left, v);
         fill_postorder(&(*n)->right, v);
         v.push_back(*n);
+    }
+
+    template<typename T>
+    void BinaryTree<T>::calc_len(T val) {
+        std::stringstream stream;
+        stream << val;
+        len = std::max(len, stream.str().size());
     }
 
     /*
