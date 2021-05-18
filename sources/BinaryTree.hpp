@@ -214,7 +214,7 @@ namespace ariel {
     // Base on: https://stackoverflow.com/questions/36802354/print-binary-tree-in-a-pretty-way-using-c
     template<typename T>
     void BinaryTree<T>::print(const std::string &prefix, const BinaryTree::Node *node,
-                              bool isRight,std::ostream &os, unsigned long spaces) {
+                              bool isRight, std::ostream &os, unsigned long spaces) {
         if (node == nullptr) {
             return;
         }

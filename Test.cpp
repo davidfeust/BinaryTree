@@ -11,6 +11,10 @@
 using namespace ariel;
 using namespace std;
 
+void create_tree();
+
+void create_tree(int n, int height);
+
 TEST_CASE ("print") {
     BinaryTree<int> bt;
     bt.add_root(0);
@@ -143,4 +147,42 @@ TEST_CASE ("add_right") {
     }
 }
 
+//BinaryTree<int> &create_tree(int n, int height, BinaryTree<int> &bt) {
+//    if (height == 0) {
+//        return bt;
+//    }
+//    bt.add_left(n, )
+//}
+
+//void create_tree() {
+//    BinaryTree<int> bt;
+//    bt.add_root(0);
+//    create_tree(0, 3);
+//}
+//void create_tree() {
+//    BinaryTree<int> bt;
+//    set<int> set;
+//    while (set.size() <= 20) {
+//        int n = rand() % 250;
+//        set.insert(n);
+//    }
+//    int prev = -1;
+//    bool right = true;
+//    for (auto i = set.begin(); i != set.end(); ++i) {
+//        if (i == set.begin()) {
+//            bt.add_root(*i);
+//            prev = *i;
+//        } else {
+//            if (right) {
+//                bt.add_right(prev, *i);
+//                right = false;
+//            } else {
+//                bt.add_left(prev, *i);
+//                right = true;
+//                prev = *i;
+//            }
+//        }
+//    }
+//    cout << bt;
+//}
 
