@@ -150,8 +150,12 @@ namespace ariel {
     // TODO: Replace root- only value?
     template<typename T>
     BinaryTree<T> &BinaryTree<T>::add_root(T value) {
-        root = new Node{value};
-        ++size;
+        if (root == nullptr) {
+            root = new Node{value};
+            ++size;
+        } else {
+            root->value = value;
+        }
         calc_len(value);
         return *this;
     }
@@ -324,7 +328,6 @@ namespace ariel {
 
     template<typename T>
     BinaryTree<T>::ConstIterator::ConstIterator(BinaryTree::Node *n, int flag) {
-        std::cout << "@@@@@@@";
         if (flag == -1) {
             fill_preorder(&n, vector);
         } else if (flag == 0) {

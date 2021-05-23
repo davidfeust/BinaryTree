@@ -4,6 +4,7 @@
 
 #include <ostream>
 #include <set>
+#include <tuple>
 
 #include "BinaryTree.hpp"
 #include "doctest.h"
@@ -11,9 +12,12 @@
 using namespace ariel;
 using namespace std;
 
-void create_tree();
+void preorder(size_t index, vector<int> &tree, vector<int> &pre);
 
-void create_tree(int n, int height);
+void inorder(size_t index, vector<int> &tree, vector<int> &in);
+
+void postorder(size_t index, vector<int> &tree, vector<int> &post);
+
 
 TEST_CASE ("print") {
     BinaryTree<int> bt;
@@ -115,7 +119,7 @@ TEST_CASE ("add_left") {
 }
 
 TEST_CASE ("add_right") {
-    for (int i = 0; i < 10; ++i) {
+    for (int t = 0; t < 10; ++t) {
         BinaryTree<int> bt;
         set<int> set;
         while (set.size() <= 20) {
@@ -147,42 +151,104 @@ TEST_CASE ("add_right") {
     }
 }
 
-//BinaryTree<int> &create_tree(int n, int height, BinaryTree<int> &bt) {
-//    if (height == 0) {
-//        return bt;
-//    }
-//    bt.add_left(n, )
-//}
+TEST_CASE ("Big tree") {
+    BinaryTree<int> bt;
+    bt.add_root(0);
+    for (int i = 0; i < 5000; ++i) {
+        if (i % 2 == 0) {
+            bt.add_right(i, i + 1);
+        } else {
+            bt.add_left(i, i + 1);
+        }
+    }
+}
 
-//void create_tree() {
-//    BinaryTree<int> bt;
-//    bt.add_root(0);
-//    create_tree(0, 3);
-//}
-//void create_tree() {
-//    BinaryTree<int> bt;
-//    set<int> set;
-//    while (set.size() <= 20) {
-//        int n = rand() % 250;
-//        set.insert(n);
-//    }
-//    int prev = -1;
-//    bool right = true;
-//    for (auto i = set.begin(); i != set.end(); ++i) {
-//        if (i == set.begin()) {
-//            bt.add_root(*i);
-//            prev = *i;
-//        } else {
-//            if (right) {
-//                bt.add_right(prev, *i);
-//                right = false;
-//            } else {
-//                bt.add_left(prev, *i);
-//                right = true;
-//                prev = *i;
-//            }
-//        }
-//    }
-//    cout << bt;
-//}
+TEST_CASE ("Not existing values") {
+    BinaryTree<int> bt;
+    bt.add_root(0);
+    // create tree with some nodes
+    for (int i = 0; i < 15; ++i) {
+        if (i % 2 == 0) {
+                    CHECK_NOTHROW(bt.add_right(i, i + 1));
+        } else {
+                    CHECK_NOTHROW(bt.add_left(i, i + 1));
+        }
+    }
+    // range of int not in the tree
+    for (int i = 20; i < 40; ++i) {
+        if (i % 2 == 0) {
+                    CHECK_THROWS(bt.add_right(i, i + 1));
+        } else {
+                    CHECK_THROWS(bt.add_left(i, i + 1));
+        }
+    }
 
+}
+
+
+TEST_CASE ("Iterators") {
+    for (int k = 0; k < 30; ++k) {
+        // create tree & vector tree:
+        size_t size = rand() % 200;
+        vector<int> tree;
+        tree.reserve(size);
+        for (int i = 0; i < size; ++i) {
+            tree.push_back(i);
+        }
+        BinaryTree<int> bt;
+        bt.add_root(0);
+        for (size_t i = 0; i < size / 2; ++i) {
+            if (2 * i + 1 < size) {
+                bt.add_left((int) i, tree.at(2 * i + 1));
+            }
+            if (2 * i + 2 < size) {
+                bt.add_right((int) i, tree.at(2 * i + 2));
+            }
+        }
+        // fill orders vectors
+        vector<int> pre, in, post;
+        preorder(0, tree, pre);
+        inorder(0, tree, in);
+        postorder(0, tree, post);
+
+        // checks all orders:
+        for (auto[i, j] = tuple{bt.begin_preorder(), (size_t) 0}; i != bt.end_preorder(); ++i, ++j) {
+                    CHECK_EQ(*i, pre[j]);
+        }
+        for (auto[i, j] = tuple{bt.begin_inorder(), (size_t) 0}; i != bt.end_inorder(); ++i, ++j) {
+                    CHECK_EQ(*i, in[j]);
+        }
+        for (auto[i, j] = tuple{bt.begin_postorder(), (size_t) 0}; i != bt.end_postorder(); ++i, ++j) {
+                    CHECK_EQ(*i, post[j]);
+        }
+        size_t j = 0;
+        for (int i: bt) {
+                    CHECK_EQ(i, in[j++]);
+        }
+    }
+}
+
+
+void preorder(size_t index, vector<int> &tree, vector<int> &pre) {
+    if (index >= 0 && index < tree.size()) {
+        pre.push_back(tree[index]);
+        preorder(index * 2 + 1, tree, pre);
+        preorder(index * 2 + 2, tree, pre);
+    }
+}
+
+void inorder(size_t index, vector<int> &tree, vector<int> &in) {
+    if (index >= 0 && index < tree.size()) {
+        inorder(index * 2 + 1, tree, in);
+        in.push_back(tree[index]);
+        inorder(index * 2 + 2, tree, in);
+    }
+}
+
+void postorder(size_t index, vector<int> &tree, vector<int> &post) {
+    if (index >= 0 && index < tree.size()) {
+        postorder(index * 2 + 1, tree, post);
+        postorder(index * 2 + 2, tree, post);
+        post.push_back(tree[index]);
+    }
+}
