@@ -87,7 +87,7 @@ namespace ariel {
 
             Iterator &operator++();
 
-            const Iterator &operator++(int);
+            const Iterator operator++(int);
 
             bool operator==(const Iterator &rhs) const;
 
@@ -111,7 +111,7 @@ namespace ariel {
 
             ConstIterator &operator++();
 
-            const ConstIterator &operator++(int);
+            const ConstIterator operator++(int);
 
             bool operator==(const ConstIterator &rhs) const;
 
@@ -147,7 +147,6 @@ namespace ariel {
      * BinaryTree:
      */
 
-    // TODO: Replace root- only value?
     template<typename T>
     BinaryTree<T> &BinaryTree<T>::add_root(T value) {
         if (root == nullptr) {
@@ -310,7 +309,7 @@ namespace ariel {
     }
 
     template<typename T>
-    const typename BinaryTree<T>::Iterator &BinaryTree<T>::Iterator::operator++(int) {
+    const typename BinaryTree<T>::Iterator BinaryTree<T>::Iterator::operator++(int) {
         Iterator temp = *this;
         curr = vector[++i];
         return temp;
@@ -350,8 +349,8 @@ namespace ariel {
     }
 
     template<typename T>
-    const typename BinaryTree<T>::ConstIterator &BinaryTree<T>::ConstIterator::operator++(int) {
-        Iterator temp = *this;
+    const typename BinaryTree<T>::ConstIterator BinaryTree<T>::ConstIterator::operator++(int) {
+        const Iterator temp = *this;
         curr = vector[++i];
         return temp;
     }
