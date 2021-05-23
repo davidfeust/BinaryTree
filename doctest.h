@@ -3854,7 +3854,7 @@ namespace detail {
             std::cerr << "\nCall to sysctl failed - unable to determine if debugger is active **\n";
             return false;
         }
-        // We're being debugged if the P_TRACED type is set.
+        // We're being debugged if the P_TRACED flag is set.
         return ((info.kp_proc.p_flag & P_TRACED) != 0);
     }
 #elif DOCTEST_MSVC || defined(__MINGW32__)
@@ -4998,7 +4998,7 @@ namespace {
             s << "Query flags - the program quits after them. Available:\n\n";
             s << " -" DOCTEST_OPTIONS_PREFIX_DISPLAY "?,   --" DOCTEST_OPTIONS_PREFIX_DISPLAY "help, -" DOCTEST_OPTIONS_PREFIX_DISPLAY "h                      "
               << Whitespace(sizePrefixDisplay*0) <<  "prints this message\n";
-            s << " -" DOCTEST_OPTIONS_PREFIX_DISPLAY "vector,   --" DOCTEST_OPTIONS_PREFIX_DISPLAY "version                       "
+            s << " -" DOCTEST_OPTIONS_PREFIX_DISPLAY "v,   --" DOCTEST_OPTIONS_PREFIX_DISPLAY "version                       "
               << Whitespace(sizePrefixDisplay*1) << "prints the version\n";
             s << " -" DOCTEST_OPTIONS_PREFIX_DISPLAY "c,   --" DOCTEST_OPTIONS_PREFIX_DISPLAY "count                         "
               << Whitespace(sizePrefixDisplay*1) << "prints the number of matching tests\n";
@@ -5404,7 +5404,7 @@ namespace {
                             return true;
                         }
                     } else {
-                        // just a type - no value
+                        // just a flag - no value
                         return true;
                     }
                 }
@@ -5426,7 +5426,7 @@ namespace {
         return parseOptionImpl(argc, argv, pattern, value);
     }
 
-    // locates a type on the command line
+    // locates a flag on the command line
     bool parseFlag(int argc, const char* const* argv, const char* pattern) {
         return parseOption(argc, argv, pattern);
     }
@@ -5609,7 +5609,7 @@ void Context::parseArgs(int argc, const char* const* argv, bool withDefaults) {
         p->exit = true;
     }
     if(parseFlag(argc, argv, DOCTEST_CONFIG_OPTIONS_PREFIX "version") ||
-       parseFlag(argc, argv, DOCTEST_CONFIG_OPTIONS_PREFIX "vector")) {
+       parseFlag(argc, argv, DOCTEST_CONFIG_OPTIONS_PREFIX "v")) {
         p->version = true;
         p->exit    = true;
     }
