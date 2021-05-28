@@ -1,5 +1,5 @@
 #define DOCTEST_CONFIG_IMPLEMENT
-#include "doctest.h"
+#include "part-a/doctest.h"
 using namespace doctest;
 
 const int MIN_TESTS = 20;

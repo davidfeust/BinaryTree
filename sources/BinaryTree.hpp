@@ -22,6 +22,57 @@ namespace ariel {
 
             Node(const T &value) : value(value), right(nullptr), left(nullptr) {}
 
+            Node(const Node &other) : value(other.value) {
+                if (other.left != nullptr) {
+                    left = new Node(*other.left);
+                } else {
+                    left = nullptr;
+                }
+                if (other.right != nullptr) {
+                    right = new Node(*other.right);
+                } else {
+                    right = nullptr;
+                }
+            }
+
+            Node &operator=(const Node &other) {
+                if (this == &other) {
+                    return *this;
+                }
+                delete left;
+                delete right;
+                value = other.value;
+                if (other.left != nullptr) {
+                    left = new Node(*other.left);
+                } else {
+                    left = nullptr;
+                }
+                if (other.right != nullptr) {
+                    right = new Node(*other.right);
+                } else {
+                    right = nullptr;
+                }
+            }
+
+            Node(Node &&other) noexcept {
+                value = other.value;
+                right = other.right;
+                other.right = nullptr;
+                left = other.left;
+                other.left = nullptr;
+            }
+
+            Node &operator=(Node &&other) noexcept {
+                if (this == &other) {
+                    return *this;
+                }
+                value = other.value;
+                right = other.right;
+                other.right = nullptr;
+                left = other.left;
+                other.left = nullptr;
+            }
+
             ~Node() {
                 delete left;
                 delete right;
@@ -38,10 +89,6 @@ namespace ariel {
         uint size;
         size_t len;
 
-        BinaryTree(const BinaryTree &other);
-
-        BinaryTree &operator=(const BinaryTree &other);
-
         Node *search(Node *n, T value);
 
         static void print(const std::string &prefix, const Node *node, bool isRight, std::ostream &os, size_t spaces);
@@ -51,7 +98,38 @@ namespace ariel {
     public:
         BinaryTree() : root(nullptr), size(0), len(0) {}
 
+        BinaryTree(const BinaryTree &other) : len(other.len), size(other.size) {
+            root = new Node(*other.root);
+        }
+
+        BinaryTree(BinaryTree &&other)  noexcept {
+            size = other.size;
+            len = other.size;
+            root = other.root;
+            other.root = nullptr;
+        }
+
         ~BinaryTree() { delete root; }
+
+        BinaryTree &operator=(const BinaryTree &other) {
+            if (this == &other) {
+                return *this;
+            }
+            delete root;
+            root = new Node(*other.root);
+            return *this;
+        }
+
+        BinaryTree &operator=(BinaryTree &&other) noexcept {
+            if (this == &other) {
+                return *this;
+            }
+            size = other.size;
+            len = other.size;
+            root = other.root;
+            other.root = nullptr;
+            return *this;
+        }
 
         BinaryTree &add_root(T value);
 
@@ -87,7 +165,11 @@ namespace ariel {
 
             Iterator &operator++();
 
-            const Iterator operator++(int);
+            Iterator operator++(int) {
+                Iterator temp = *this;
+                curr = vector[++i];
+                return temp;
+            }
 
             bool operator==(const Iterator &rhs) const;
 
@@ -111,7 +193,11 @@ namespace ariel {
 
             ConstIterator &operator++();
 
-            const ConstIterator operator++(int);
+            ConstIterator operator++(int) {
+                const Iterator temp = *this;
+                curr = vector[++i];
+                return temp;
+            }
 
             bool operator==(const ConstIterator &rhs) const;
 
@@ -214,9 +300,8 @@ namespace ariel {
         Node *r = search(n->right, value);
         if (l == nullptr) {
             return r;
-        } else {
-            return l;
         }
+        return l;
     }
 
     // Base on: https://stackoverflow.com/questions/36802354/print-binary-tree-in-a-pretty-way-using-c
@@ -228,7 +313,12 @@ namespace ariel {
         }
         std::string spaces_str(spaces - 1, ' ');
         os << prefix << spaces_str;
-        os << (isRight ? "╙──" : "╠──");
+        if (isRight) {
+            os << "╙──";
+        } else {
+            os << "╠──";
+        }
+//        os << (isRight ? "╙──" : "╠──");
 
         // print the value of the node
         os << std::setw((int) spaces) << node->value;
@@ -275,7 +365,7 @@ namespace ariel {
     template<typename T>
     void BinaryTree<T>::calc_len(T val) {
         std::stringstream stream;
-        stream << val;
+//        stream << val;
         len = std::max(len, stream.str().size());
     }
 
@@ -308,12 +398,12 @@ namespace ariel {
         return curr != rhs.curr;
     }
 
-    template<typename T>
-    const typename BinaryTree<T>::Iterator BinaryTree<T>::Iterator::operator++(int) {
-        Iterator temp = *this;
-        curr = vector[++i];
-        return temp;
-    }
+//    template<typename T>
+//    const typename BinaryTree<T>::Iterator BinaryTree<T>::Iterator::operator++(int) {
+//        Iterator temp = *this;
+//        curr = vector[++i];
+//        return temp;
+//    }
 
     template<typename T>
     typename BinaryTree<T>::Iterator &BinaryTree<T>::Iterator::operator++() {
@@ -326,7 +416,7 @@ namespace ariel {
      */
 
     template<typename T>
-    BinaryTree<T>::ConstIterator::ConstIterator(BinaryTree::Node *n, int flag) {
+    BinaryTree<T>::ConstIterator::ConstIterator(BinaryTree::Node *n, int flag) : curr(n), i(0), type(flag) {
         if (flag == -1) {
             fill_preorder(&n, vector);
         } else if (flag == 0) {
@@ -348,12 +438,12 @@ namespace ariel {
         return curr != rhs.curr;
     }
 
-    template<typename T>
-    const typename BinaryTree<T>::ConstIterator BinaryTree<T>::ConstIterator::operator++(int) {
-        const Iterator temp = *this;
-        curr = vector[++i];
-        return temp;
-    }
+//    template<typename T>
+//    const typename BinaryTree<T>::ConstIterator BinaryTree<T>::ConstIterator::operator++(int) {
+//        const Iterator temp = *this;
+//        curr = vector[++i];
+//        return temp;
+//    }
 
     template<typename T>
     typename BinaryTree<T>::ConstIterator &BinaryTree<T>::ConstIterator::operator++() {
