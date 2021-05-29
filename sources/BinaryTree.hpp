@@ -9,6 +9,7 @@
 #include <vector>
 #include <iomanip>
 #include <cstring>
+#include <memory>
 
 namespace ariel {
 
@@ -18,18 +19,21 @@ namespace ariel {
     private:
         struct Node {
             T value;
-            Node *right, *left;
+            std::shared_ptr<Node> right, left;
 
-            Node(const T &value) : value(value), right(nullptr), left(nullptr) {}
+            Node(const T &value) :
+                    value(value), right(nullptr), left(nullptr) {}
 
             Node(const Node &other) : value(other.value) {
                 if (other.left != nullptr) {
-                    left = new Node(*other.left);
+                    std::shared_ptr<Node> tmp{new Node(*other.left)};
+                    left = tmp;
                 } else {
                     left = nullptr;
                 }
                 if (other.right != nullptr) {
-                    right = new Node(*other.right);
+                    std::shared_ptr<Node> tmp{new Node(*other.right)};
+                    right = tmp;
                 } else {
                     right = nullptr;
                 }
@@ -39,8 +43,6 @@ namespace ariel {
                 if (this == &other) {
                     return *this;
                 }
-                delete left;
-                delete right;
                 value = other.value;
                 if (other.left != nullptr) {
                     left = new Node(*other.left);
@@ -73,50 +75,126 @@ namespace ariel {
                 other.left = nullptr;
             }
 
-            ~Node() {
-                delete left;
-                delete right;
-            }
+            ~Node() = default;
         }; // END Node class
 
-        static void fill_preorder(Node **n, std::vector<Node *> &vector);
+        static void fill_preorder(std::shared_ptr<Node> *n, std::vector<std::shared_ptr<Node>> &vector) {
+            if (*n == nullptr) {
+                return;
+            }
+            vector.push_back(*n);
+            fill_preorder(&(*n)->left, vector);
+            fill_preorder(&(*n)->right, vector);
+        }
 
-        static void fill_inorder(Node **n, std::vector<Node *> &vector);
+        static void fill_inorder(std::shared_ptr<Node> *n, std::vector<std::shared_ptr<Node>> &vector) {
+            if (*n == nullptr) {
+                return;
+            }
+            fill_inorder(&(*n)->left, vector);
+            vector.push_back(*n);
+            fill_inorder(&(*n)->right, vector);
+        }
 
-        static void fill_postorder(Node **n, std::vector<Node *> &vector);
+        static void fill_postorder(std::shared_ptr<Node> *n, std::vector<std::shared_ptr<Node>> &vector) {
+            if (*n == nullptr) {
+                return;
+            }
+            fill_postorder(&(*n)->left, vector);
+            fill_postorder(&(*n)->right, vector);
+            vector.push_back(*n);
+        }
 
-        Node *root;
+        std::shared_ptr<Node> root;
         uint size;
         size_t len;
 
-        Node *search(Node *n, T value);
+        /**
+         * Search the value in the tree, start from n node.
+         * @param n node to start the search on.
+         * @param value value to search.
+         * @return Node* of the node contain the value, nullptr if the value not in
+         * the tree.
+         */
+        std::shared_ptr<Node> search(std::shared_ptr<Node> n, T value) {
+            if (n == nullptr) {
+                return nullptr;
+            }
+            if (n->value == value) {
+                return n;
+            }
+            std::shared_ptr<Node> l = search(n->left, value);
+            std::shared_ptr<Node> r = search(n->right, value);
+            if (l == nullptr) {
+                return r;
+            }
+            return l;
+        }
 
-        static void print(const std::string &prefix, const Node *node, bool isRight, std::ostream &os, size_t spaces);
+        // Base on: https://stackoverflow.com/questions/36802354/print-binary-tree-in-a-pretty-way-using-c
+        static void print(const std::string &prefix, const std::shared_ptr<Node> node, bool isRight, std::ostream &os,
+                          size_t spaces) {
+            if (node == nullptr) {
+                return;
+            }
+            std::string spaces_str(spaces - 1, ' ');
+            os << prefix << spaces_str;
+            if (isRight) {
+                os << "╙──";
+            } else {
+                os << "╠──";
+            }
 
-        void calc_len(T val);
+            // print the value of the node
+            os << std::setw((int) spaces) << node->value;
+            if (node->left || node->right) {
+                os << "╖";
+            }
+            os << std::endl;
+
+            // enter the next tree level - left and right branch
+            print(prefix + spaces_str + (isRight ? "    " : "║   "), node->right, false, os, spaces);
+            print(prefix + spaces_str + (isRight ? "    " : "║   "), node->left, true, os, spaces);
+        }
+
+        static size_t calc_len(const std::shared_ptr<Node> n, size_t ans) {
+            if (n == nullptr) {
+                return 0;
+            }
+            std::stringstream stream;
+            stream << n->value;
+            ans = stream.str().size();
+            size_t left_ans = calc_len(n->left, ans);
+            size_t right_ans = calc_len(n->right, ans);
+            if (left_ans > ans) { ans = left_ans; }
+            if (right_ans > ans) { ans = right_ans; }
+            return ans;
+        }
+
 
     public:
         BinaryTree() : root(nullptr), size(0), len(0) {}
 
         BinaryTree(const BinaryTree &other) : len(other.len), size(other.size) {
-            root = new Node(*other.root);
+            std::shared_ptr<Node> tmp{new Node(*other.root)};
+            root = tmp;
         }
 
-        BinaryTree(BinaryTree &&other)  noexcept {
+        BinaryTree(BinaryTree &&other) noexcept {
             size = other.size;
             len = other.size;
             root = other.root;
             other.root = nullptr;
         }
 
-        ~BinaryTree() { delete root; }
+        ~BinaryTree() = default;
 
         BinaryTree &operator=(const BinaryTree &other) {
             if (this == &other) {
                 return *this;
             }
-            delete root;
-            root = new Node(*other.root);
+            std::shared_ptr<Node> tmp{new Node(*other.root)};
+            root = tmp;
             return *this;
         }
 
@@ -131,39 +209,89 @@ namespace ariel {
             return *this;
         }
 
-        BinaryTree &add_root(T value);
+        BinaryTree &add_root(T value) {
+            if (root == nullptr) {
+                std::shared_ptr<Node> tmp{new Node{value}};
+                root = tmp;
+                ++size;
+            } else {
+                root->value = value;
+            }
+            return *this;
+        }
 
-        BinaryTree &add_left(T existing_value, T new_value);
+        BinaryTree &add_left(T existing_value, T new_value) {
+            std::shared_ptr<Node> n = search(root, existing_value);
+            if (n == nullptr) {
+                throw std::runtime_error(
+                        "Error: existing_value is no exist in the tree.\n");
+            }
+            if (n->left == nullptr) {
+                std::shared_ptr<Node> tmp{new Node{new_value}};
+                n->left = tmp;
+                ++size;
+            } else {
+                n->left->value = new_value;
+            }
+            return *this;
+        }
 
-        BinaryTree &add_right(T existing_value, T new_value);
+        BinaryTree &add_right(T existing_value, T new_value) {
+            std::shared_ptr<Node> n = search(root, existing_value);
+            if (n == nullptr) {
+                throw std::runtime_error(
+                        "Error: existing_value is no exist in the tree.\n");
+            }
+            if (n->right == nullptr) {
+                std::shared_ptr<Node> tmp{new Node{new_value}};
+                n->right = tmp;
+                ++size;
+            } else {
+                n->right->value = new_value;
+            }
+            return *this;
+        }
 
         friend std::ostream &operator<<(std::ostream &os, const BinaryTree<T> &tree) {
             os << "BinaryTree: (size = " << tree.size << ")" << std::endl;
-            std::string spaces_str(tree.len - 1, ' ');
+            size_t len = calc_len(tree.root, 0);
+            std::string spaces_str(len - 1, ' ');
             os << spaces_str << "╗" << std::endl;
-            print("", tree.root, true, os, tree.len);
+            print("", tree.root, true, os, len);
             return os;
         }
-
-        // iterators:
 
         struct Iterator {
 
         private:
-            Node *curr;
+            std::shared_ptr<Node> curr;
             uint i;
             int type;  // -1: pre | 0: in | 1: post
-            std::vector<Node *> vector;
+            std::vector<std::shared_ptr<Node>> vector;
 
         public:
 
-            Iterator(Node *n, int flag);
+            Iterator(std::shared_ptr<Node> n, int flag) : curr(n), i(0), type(flag) {
+                if (flag == -1) {
+                    fill_preorder(&n, vector);
+                } else if (flag == 0) {
+                    fill_inorder(&n, vector);
+                } else {
+                    fill_postorder(&n, vector);
+                }
+                vector.push_back(nullptr);
+                std::shared_ptr<Node> tmp{vector[0]};
+                curr = tmp;
+            }
 
             T &operator*() const { return curr->value; }
 
             T *operator->() const { return &(curr->value); }
 
-            Iterator &operator++();
+            Iterator &operator++() {
+                curr = vector[++i];
+                return *this;
+            }
 
             Iterator operator++(int) {
                 Iterator temp = *this;
@@ -171,38 +299,14 @@ namespace ariel {
                 return temp;
             }
 
-            bool operator==(const Iterator &rhs) const;
-
-            bool operator!=(const Iterator &rhs) const;
-        };  // END Iterator class
-
-        struct ConstIterator {
-
-        private:
-            Node *curr;
-            uint i;
-            int type;  // -1: pre | 0: in | 1: post
-            std::vector<Node *> vector;
-
-        public:
-            ConstIterator(Node *n, int flag);
-
-            const T &operator*() const { return curr->value; }
-
-            const T *operator->() const { return &(curr->value); }
-
-            ConstIterator &operator++();
-
-            ConstIterator operator++(int) {
-                const Iterator temp = *this;
-                curr = vector[++i];
-                return temp;
+            bool operator==(const Iterator &rhs) const {
+                return curr == rhs.curr;
             }
 
-            bool operator==(const ConstIterator &rhs) const;
-
-            bool operator!=(const ConstIterator &rhs) const;
-        };  // END ConstIterator class
+            bool operator!=(const Iterator &rhs) const {
+                return curr != rhs.curr;
+            }
+        };  // END Iterator class
 
         Iterator begin_preorder() { return Iterator{root, -1}; }
 
@@ -220,235 +324,8 @@ namespace ariel {
 
         Iterator end() { return end_inorder(); }
 
-        ConstIterator cbegin() const { return ConstIterator{root, 0}; }
+//        ConstIterator cbegin() const { return ConstIterator{root, 0}; }
+//        ConstIterator cend() const { return ConstIterator{nullptr, 0}; }
 
-        ConstIterator cend() const { return ConstIterator{nullptr, 0}; }
     };
-
-    ////////////////////////////////
-    //////  Implementations:  //////
-    ////////////////////////////////
-
-    /*
-     * BinaryTree:
-     */
-
-    template<typename T>
-    BinaryTree<T> &BinaryTree<T>::add_root(T value) {
-        if (root == nullptr) {
-            root = new Node{value};
-            ++size;
-        } else {
-            root->value = value;
-        }
-        calc_len(value);
-        return *this;
-    }
-
-    template<typename T>
-    BinaryTree<T> &BinaryTree<T>::add_left(T existing_value, T new_value) {
-        Node *n = search(root, existing_value);
-        if (n == nullptr) {
-            throw std::runtime_error(
-                    "Error: existing_value is no exist in the tree.\n");
-        }
-        if (n->left == nullptr) {
-            n->left = new Node{new_value};
-            calc_len(new_value);
-            ++size;
-        } else {
-            n->left->value = new_value;
-            calc_len(new_value);
-        }
-        return *this;
-    }
-
-    template<typename T>
-    BinaryTree<T> &BinaryTree<T>::add_right(T existing_value, T new_value) {
-        Node *n = search(root, existing_value);
-        if (n == nullptr) {
-            throw std::runtime_error(
-                    "Error: existing_value is no exist in the tree.\n");
-        }
-        if (n->right == nullptr) {
-            n->right = new Node{new_value};
-            calc_len(new_value);
-            ++size;
-        } else {
-            n->right->value = new_value;
-            calc_len(new_value);
-        }
-        return *this;
-    }
-
-    /**
-     * Search the value in the tree, start from n node.
-     * @param n node to start the search on.
-     * @param value value to search.
-     * @return Node* of the node contain the value, nullptr if the value not in
-     * the tree.
-     */
-    template<typename T>
-    typename BinaryTree<T>::Node *BinaryTree<T>::search(BinaryTree::Node *n, T value) {
-        if (n == nullptr) {
-            return nullptr;
-        }
-        if (n->value == value) {
-            return n;
-        }
-        Node *l = search(n->left, value);
-        Node *r = search(n->right, value);
-        if (l == nullptr) {
-            return r;
-        }
-        return l;
-    }
-
-    // Base on: https://stackoverflow.com/questions/36802354/print-binary-tree-in-a-pretty-way-using-c
-    template<typename T>
-    void BinaryTree<T>::print(const std::string &prefix, const BinaryTree::Node *node,
-                              bool isRight, std::ostream &os, unsigned long spaces) {
-        if (node == nullptr) {
-            return;
-        }
-        std::string spaces_str(spaces - 1, ' ');
-        os << prefix << spaces_str;
-        if (isRight) {
-            os << "╙──";
-        } else {
-            os << "╠──";
-        }
-//        os << (isRight ? "╙──" : "╠──");
-
-        // print the value of the node
-        os << std::setw((int) spaces) << node->value;
-        if (node->left || node->right) {
-            os << "╖";
-        }
-        os << std::endl;
-
-        // enter the next tree level - left and right branch
-        print(prefix + spaces_str + (isRight ? "    " : "║   "), node->right, false, os, spaces);
-        print(prefix + spaces_str + (isRight ? "    " : "║   "), node->left, true, os, spaces);
-    }
-
-    template<typename T>
-    void BinaryTree<T>::fill_inorder(BinaryTree::Node **n, std::vector<Node *> &v) {
-        if (*n == nullptr) {
-            return;
-        }
-        fill_inorder(&(*n)->left, v);
-        v.push_back(*n);
-        fill_inorder(&(*n)->right, v);
-    }
-
-    template<typename T>
-    void BinaryTree<T>::fill_preorder(BinaryTree::Node **n, std::vector<Node *> &v) {
-        if (*n == nullptr) {
-            return;
-        }
-        v.push_back(*n);
-        fill_preorder(&(*n)->left, v);
-        fill_preorder(&(*n)->right, v);
-    }
-
-    template<typename T>
-    void BinaryTree<T>::fill_postorder(BinaryTree::Node **n, std::vector<Node *> &v) {
-        if (*n == nullptr) {
-            return;
-        }
-        fill_postorder(&(*n)->left, v);
-        fill_postorder(&(*n)->right, v);
-        v.push_back(*n);
-    }
-
-    template<typename T>
-    void BinaryTree<T>::calc_len(T val) {
-        std::stringstream stream;
-//        stream << val;
-        len = std::max(len, stream.str().size());
-    }
-
-    /*
-     * Iterator:
-     */
-
-    template<typename T>
-    BinaryTree<T>::Iterator::Iterator(BinaryTree::Node *n, int flag) : curr(n), i(0), type(flag) {
-        if (flag == -1) {
-            fill_preorder(&n, vector);
-        } else if (flag == 0) {
-            fill_inorder(&n, vector);
-        } else {
-            fill_postorder(&n, vector);
-        }
-        vector.push_back(nullptr);
-        curr = vector[0];
-    }
-
-    template<typename T>
-    bool ariel::BinaryTree<T>::Iterator::operator==(
-            const ariel::BinaryTree<T>::Iterator &rhs) const {
-        return curr == rhs.curr;
-    }
-
-    template<typename T>
-    bool ariel::BinaryTree<T>::Iterator::operator!=(
-            const ariel::BinaryTree<T>::Iterator &rhs) const {
-        return curr != rhs.curr;
-    }
-
-//    template<typename T>
-//    const typename BinaryTree<T>::Iterator BinaryTree<T>::Iterator::operator++(int) {
-//        Iterator temp = *this;
-//        curr = vector[++i];
-//        return temp;
-//    }
-
-    template<typename T>
-    typename BinaryTree<T>::Iterator &BinaryTree<T>::Iterator::operator++() {
-        curr = vector[++i];
-        return *this;
-    }
-
-    /*
-     * ConstIterator:
-     */
-
-    template<typename T>
-    BinaryTree<T>::ConstIterator::ConstIterator(BinaryTree::Node *n, int flag) : curr(n), i(0), type(flag) {
-        if (flag == -1) {
-            fill_preorder(&n, vector);
-        } else if (flag == 0) {
-            fill_inorder(&n, vector);
-        } else {
-            fill_postorder(&n, vector);
-        }
-        vector.push_back(nullptr);
-        curr = vector[0];
-    }
-
-    template<typename T>
-    bool ariel::BinaryTree<T>::ConstIterator::operator==(const ariel::BinaryTree<T>::ConstIterator &rhs) const {
-        return curr == rhs.curr;
-    }
-
-    template<typename T>
-    bool ariel::BinaryTree<T>::ConstIterator::operator!=(const ariel::BinaryTree<T>::ConstIterator &rhs) const {
-        return curr != rhs.curr;
-    }
-
-//    template<typename T>
-//    const typename BinaryTree<T>::ConstIterator BinaryTree<T>::ConstIterator::operator++(int) {
-//        const Iterator temp = *this;
-//        curr = vector[++i];
-//        return temp;
-//    }
-
-    template<typename T>
-    typename BinaryTree<T>::ConstIterator &BinaryTree<T>::ConstIterator::operator++() {
-        curr = vector[++i];
-        return *this;
-    }
-
 }  // namespace ariel
