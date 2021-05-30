@@ -12,14 +12,7 @@ SOURCES=$(wildcard $(SOURCE_PATH)/*.cpp)
 HEADERS=$(wildcard $(SOURCE_PATH)/*.hpp)
 OBJECTS=$(subst sources/,objects/,$(subst .cpp,.o,$(SOURCES)))
 
-run: test1 test2 test3 test
-	./test
-	./test1
-	./test2
-	./test3
-
-test: TestCounter.o Test.o $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+run: test1 test2 test3
 
 test1: TestRunner.o StudentTest1.o  $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $^ -o $@
@@ -30,7 +23,7 @@ test2: TestRunner.o StudentTest2.o  $(OBJECTS)
 test3: TestRunner.o StudentTest3.o  $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-demo: Demo.o $(OBJECTS) 
+demo: Demo.o $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 
@@ -47,10 +40,8 @@ StudentTest3.cpp:  # Asahel Cohen
 tidy:
 	clang-tidy sources/BinaryTree.hpp $(TIDY_FLAGS) --
 
-valgrind: test
-	valgrind --tool=memcheck $(VALGRIND_FLAGS) ./test 2>&1 | { egrep "lost| at " || true; }
-#valgrind: test1
-	#valgrind --tool=memcheck $(VALGRIND_FLAGS) ./test1 2>&1 | { egrep "lost| at " || true; }
+valgrind: test1
+	valgrind --tool=memcheck $(VALGRIND_FLAGS) ./test1 2>&1 | { egrep "lost| at " || true; }
 
 %.o: %.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) --compile $< -o $@
