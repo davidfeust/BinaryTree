@@ -227,8 +227,7 @@ namespace ariel {
             return *this;
         }
 
-        friend std::ostream &operator<<(std::ostream &os,
-                                        const BinaryTree<T> &tree) {
+        friend std::ostream &operator<<(std::ostream &os, const BinaryTree<T> &tree) {
             os << "BinaryTree: (size = " << tree.size << ")" << std::endl;
             size_t len = calc_len(tree.root, 0);
             std::string spaces_str(len - 1, ' ');
@@ -252,17 +251,6 @@ namespace ariel {
                 }
             }
 
-            void in_plus() {
-                if (!stack.empty()) {
-                    curr = stack.top();
-                    stack.pop();
-                    auto tmp = curr->right;
-                    insert_left(tmp);
-                } else {
-                    curr = nullptr;
-                }
-            }
-
             void pre_plus() {
                 if (!stack.empty()) {
                     curr = stack.top();
@@ -278,12 +266,26 @@ namespace ariel {
                 }
             }
 
+            // Base on:
+            // https://www.geeksforgeeks.org/inorder-tree-traversal-without-recursion/
+            void in_plus() {
+                if (!stack.empty()) {
+                    curr = stack.top();
+                    stack.pop();
+                    auto tmp = curr->right;
+                    insert_left(tmp);
+                } else {
+                    curr = nullptr;
+                }
+            }
+
+            // Base on:
+            // https://www.geeksforgeeks.org/iterative-postorder-traversal-using-stack/
             void post_plus() {
                 while (!stack.empty()) {
                     std::shared_ptr<Node> current = stack.top();
 
-                    /* go down the tree in search of a leaf an if so process it
-                    and pop stack otherwise move down */
+                    // go down the tree in search of a leaf an if so process it and pop stack otherwise move down
                     if (prev.get() == nullptr || prev->left == current ||
                         prev->right == current) {
                         if (current->left != nullptr) {
@@ -296,9 +298,8 @@ namespace ariel {
                             prev = current;
                             return;
                         }
-                        /* go up the tree from left node, if the child is right
-                        push it onto stack otherwise process parent and pop
-                        stack */
+                        // go up the tree from left node, if the child is right
+                        // push it onto stack otherwise process parent and pop stack
                     } else if (current->left == prev) {
                         if (current->right != nullptr) {
                             stack.push(current->right);
@@ -308,8 +309,8 @@ namespace ariel {
                             prev = current;
                             return;
                         }
-                        /* go up the tree from right node and after coming back
-                        from right node process parent and pop stack */
+                        // go up the tree from right node and after coming back
+                        // from right node process parent and pop stack
                     } else if (current->right == prev) {
                         stack.pop();
                         curr = current;
@@ -322,14 +323,13 @@ namespace ariel {
             }
 
         public:
-            Iterator(std::shared_ptr<Node> n, int flag)
-                    : curr(n), type(flag), prev(nullptr) {
+            Iterator(std::shared_ptr<Node> n, int flag) : curr(n), type(flag), prev(nullptr) {
                 if (n == nullptr) {
                     return;
                 }
                 root = n;  // post helper
 
-                if (flag == -1) {  // pre
+                if (type == -1) {  // pre
                     if (curr->right) {
                         stack.push(curr->right);
                     }
@@ -337,7 +337,7 @@ namespace ariel {
                         stack.push(curr->left);
                     }
 
-                } else if (flag == 0) {  // in
+                } else if (type == 0) {  // in
                     insert_left(n);
                     in_plus();
 
